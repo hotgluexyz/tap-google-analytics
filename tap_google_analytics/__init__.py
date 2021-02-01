@@ -159,11 +159,6 @@ def process_args():
             "tap-google-analytics: a valid start_date must be provided.")
         sys.exit(1)
 
-    if not (args.config.get('reports') or args.catalog):
-        LOGGER.critical(
-            "tap-google-analytics: a catalog or report must be provided.")
-        sys.exit(1)
-
     if not args.config.get('access_token') and \
        not args.config.get('refresh_token') and \
        not args.config.get('client_id') and \
