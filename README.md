@@ -40,11 +40,7 @@ pip install -e .
 
 ## Authorization Methods
 
-`tap-google-analytics` supports two different ways of authorization:
- - Service account based authorization, where an administrator manually creates a service account with the appropriate permissions to view the account, property, and view you wish to fetch data from
- - OAuth `access_token` based authorization, where this tap gets called with a valid `access_token` and `refresh_token` produced by an OAuth flow conducted in a different system.
-
-If you're setting up `tap-google-analytics` for your own organization and only plan to extract from a handful of different views in the same limited set of properties, Service Account based authorization is the simplest. When you create a service account Google gives you a json file with that service account's credentials called the `client_secrets.json`, and that's all you need to pass to this tap, and you only have to do it once, so this is the recommended way of configuring `tap-google-analytics`.
+`tap-google-analytics` supports OAuth `access_token` based authorization, where this tap gets called with a valid `access_token` and `refresh_token` produced by an OAuth flow conducted in a different system.
 
 If you're building something where a wide variety of users need to be able to give access to their Google Analytics, `tap-google-analytics` can use an `access_token` granted by those users to authorize it's requests to Google. This `access_token` is produced by a normal Google OAuth flow, but this flow is outside the scope of `tap-google-analytics`. This is useful if you're integrating `tap-google-analytics` with another system, like Stitch Data might do to allow users to configure their extracts themselves without manual config setup. This tap expects an `access_token`, `refresh_token`, `client_id` and `client_secret` to be passed to it in order to authenticate as the user who granted the token and then access their data.
 
@@ -98,19 +94,17 @@ A sample config for `tap-google-analytics` might look like this:
 **sample_config.json**
 ```js
 {
-  "key_file_location": "client_secrets.json",  // can also use `oauth_credentials`, see below
-  "view_id": "123456789",
   "reports": "reports.json",
   "start_date": "2019-05-01T00:00:00Z",
-  "end_date": "2019-06-01T00:00:00Z"
+  "end_date": "2019-06-01T00:00:00Z",
+  "access_token": "<ya29.GlxtB_access_token_gobbledegook>",
+  "refresh_token": "<ya29.GlxtB_refresh_tokeN_gobbledegook>",
+  "client_id": "<something.apps.googleusercontent.com>",
+  "client_secret": "<some client secret string>"
 }
 ```
 
 #### Required configuration parameters:
-
-- **view_id**: The ID for the Google Analytics View you want to fetch data from.
-
-  You can easily find it by using [Google Analytics Account Explorer](https://ga-dev-tools.appspot.com/account-explorer/).
 
 - **start_date**: The earliest date you want to fetch data for
 
@@ -126,22 +120,6 @@ A sample config for `tap-google-analytics` might look like this:
   "start_date": "2019-05-01T00:00:00Z",
   "end_date": "2019-06-01T00:00:00Z"
   ```
-
-- **key_file_location**: If using Service Account based authorization, path to the `client_secrets.json` file you generated and downloaded during the "Create credentials" step.
-
-- **oauth_credentials**: If using OAuth based authorization, a nested JSON object with the whole config looking like this:
-
-```json
-{
-  "oauth_credentials": {
-      "access_token": "<ya29.GlxtB_access_token_gobbledegook>",
-      "refresh_token": "<ya29.GlxtB_refresh_tokeN_gobbledegook>",
-      "client_id": "<something.apps.googleusercontent.com>",
-      "client_secret": "<some client secret string>"
-  },
-  "view_id": ...
-}
-```
 
 - **quota_user**: an arbitrary string to use as an identifier for the user this library is being invoked on behalf of. Since the Google Analytics APIs have restrictive call quotas, they have a parameter for the API that allows server side applications like `tap-google-analytics` to make invocations under different users that each have a quota. See https://developers.google.com/analytics/devguides/reporting/core/v4/limits-quotas and https://developers.google.com/analytics/devguides/reporting/core/v4/parameters for more information. This parameter is only necessary if you are running into 429 Too Many Request errors from the GA API when running this tap.
 

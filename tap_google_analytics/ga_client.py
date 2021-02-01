@@ -97,20 +97,16 @@ class GAClient:
 {self.end_date}")
 
     def initialize_credentials(self, config):
-        if config.get('oauth_credentials', {}).get('access_token', None):
-            return GoogleCredentials(
-                access_token=config['oauth_credentials']['access_token'],
-                refresh_token=config['oauth_credentials']['refresh_token'],
-                client_id=config['oauth_credentials']['client_id'],
-                client_secret=config['oauth_credentials']['client_secret'],
-                # let the library refresh the token if it is expired
-                token_expiry=None,
-                token_uri="https://accounts.google.com/o/oauth2/token",
-                user_agent="tap-google-analytics (via singer.io)"
-            )
-        else:
-            return ServiceAccountCredentials \
-                .from_json_keyfile_dict(config['client_secrets'], SCOPES)
+        return GoogleCredentials(
+            access_token=config['access_token'],
+            refresh_token=config['refresh_token'],
+            client_id=config['client_id'],
+            client_secret=config['client_secret'],
+            # let the library refresh the token if it is expired
+            token_expiry=None,
+            token_uri="https://accounts.google.com/o/oauth2/token",
+            user_agent="tap-google-analytics (via singer.io)"
+        )
 
     def initialize_analyticsreporting(self):
         """Initializes an Analytics Reporting API V4 service object.

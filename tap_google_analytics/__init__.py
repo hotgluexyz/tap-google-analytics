@@ -164,11 +164,12 @@ def process_args():
             "tap-google-analytics: a catalog or report must be provided.")
         sys.exit(1)
 
-    if not args.config.get('key_file_location') and \
-       not args.config.get('oauth_credentials'):
+    if not args.config.get('access_token') and \
+       not args.config.get('refresh_token') and \
+       not args.config.get('client_id') and \
+       not args.config.get('client_secret'):
         LOGGER.critical(
-            "tap-google-analytics: a valid key_file_location string or \
-oauth_credentials object must be provided.")
+            "tap-google-analytics: oauth credentials must be provided.")
         sys.exit(1)
 
     # Remove optional args that have empty strings as values
@@ -193,33 +194,6 @@ oauth_credentials object must be provided.")
             .format(start_date, end_date))
         sys.exit(1)
 
-    # If using a service account, validate that the client_secrets.json file
-    # exists and load it
-    if args.config.get('key_file_location'):
-        if Path(args.config['key_file_location']).is_file():
-            try:
-                args.config['client_secrets'] = load_json(
-                    args.config['key_file_location'])
-            except ValueError:
-                LOGGER.critical(
-                    "tap-google-analytics: The JSON definition in '{}' has \
-errors".format(args.config['key_file_location']))
-                sys.exit(1)
-        else:
-            LOGGER.critical(
-                "tap-google-analytics: '{}' file not found"
-                .format(args.config['key_file_location']))
-            sys.exit(1)
-    else:
-        # If using oauth credentials, verify that all required keys are present
-        credentials = args.config['oauth_credentials']
-        for key in ['access_token', 'refresh_token',
-                    'client_id', 'client_secret']:
-            if not credentials.get(key):
-                LOGGER.critical(
-                    f"tap-google-analytics: a valid {key} for the \
-oauth_credentials must be provided.")
-                sys.exit(1)
     return args
 
 

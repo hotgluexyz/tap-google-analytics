@@ -1,5 +1,10 @@
 {
-  "key_file_location": "client_secrets.json",
   "view_id": "123456789",
-  "start_date": "2019-05-01T00:00:00Z"
+  "reports": "reports.json",
+  "start_date": "2019-05-01T00:00:00Z",
+  "end_date": "2019-06-01T00:00:00Z",
+  "access_token": "<ya29.GlxtB_access_token_gobbledegook>",
+  "refresh_token": "<ya29.GlxtB_refresh_tokeN_gobbledegook>",
+  "client_id": "<something.apps.googleusercontent.com>",
+  "client_secret": "<some client secret string>"
 }
