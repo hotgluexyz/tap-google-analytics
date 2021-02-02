@@ -107,3 +107,5 @@ files/
 
 client_secrets.json
 reports.json
+
+tmp/

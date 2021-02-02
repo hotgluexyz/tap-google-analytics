@@ -158,6 +158,39 @@ class GAClient:
 
         return (dimensions, metrics)
 
+    def fetch_views(self):
+        """
+        Fetch the views the user has access to.
+
+        Returns:
+          A dict of views, mapping webPropertyId -> a list of profiles
+        """
+        views = {}
+
+        # Initialize a Google Analytics API V3 service object and build the
+        # service object. This is needed in order to dynamically fetch the
+        # available profiles.
+        # (those are not provided in the Analytics Reporting API V4)
+        service = build('analytics', 'v3', credentials=self.credentials)
+
+        account_summaries = service.management().accountSummaries().list().execute()
+        summaries = account_summaries.get("items", [])
+
+        for s in summaries:
+            properties = s.get("webProperties", [])
+
+            for p in properties:
+                property_id = p.get("id")
+                property_name = p.get("name")
+                profiles = p.get("profiles", [])
+                views[property_id] = {
+                    "property_id": property_id,
+                    "property_name": property_name,
+                    "profiles": profiles
+                }
+
+        return views
+
     def lookup_data_type(self, type, attribute):
         """
         Get the data type of a metric or a dimension

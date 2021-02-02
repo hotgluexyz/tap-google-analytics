@@ -55,104 +55,111 @@ class ReportsHelper:
             A valid Singer.io Catalog.
         """
         streams = []
+        views = self.client.fetch_views()
 
-        for report in self.reports_definition:
+        for property_id in views:
             # For each report in reports_definition generate a Catalog Entry
-            schema_name = report['name']
-            view_id = report.get('view_id', self.client.view_id)
+            web_property = views[property_id]
+            prop_name = web_property['property_name']
+            profiles = web_property['profiles']
 
-            schema = {
-                "type": ["null", "object"],
-                "additionalProperties": False,
-                "properties": {}
-            }
+            for profile in profiles:
+                for report in self.reports_definition:
+                    schema_name = f'{prop_name}_{report.get("name")}'
+                    view_id = profile.get('id', self.client.view_id)
 
-            metadata = []
-            stream_metadata = {
-                "metadata": {
-                    "inclusion": "automatic",
-                    "table-key-properties": None
-                },
-                "breadcrumb": []
-            }
-            table_key_properties = []
+                    schema = {
+                        "type": ["null", "object"],
+                        "additionalProperties": False,
+                        "properties": {}
+                    }
 
-            # Track if there is a date set as one of the Dimensions
-            date_dimension_included = False
+                    metadata = []
+                    stream_metadata = {
+                        "metadata": {
+                            "inclusion": "automatic",
+                            "table-key-properties": None
+                        },
+                        "breadcrumb": []
+                    }
+                    table_key_properties = []
 
-            # Add the dimensions to the schema and as key_properties
-            for dimension in report['dimensions']:
-                if dimension == 'ga:date':
-                    date_dimension_included = True
+                    # Track if there is a date set as one of the Dimensions
+                    date_dimension_included = False
 
-                data_type = self.client.lookup_data_type(
-                    'dimension', dimension)
-                dimension = dimension.replace("ga:", "ga_")
-                schema['properties'][dimension] = {
-                    "type": [data_type],
-                }
+                    # Add the dimensions to the schema and as key_properties
+                    for dimension in report['dimensions']:
+                        if dimension == 'ga:date':
+                            date_dimension_included = True
 
-                table_key_properties.append(dimension)
+                        data_type = self.client.lookup_data_type(
+                            'dimension', dimension)
+                        dimension = dimension.replace("ga:", "ga_")
+                        schema['properties'][dimension] = {
+                            "type": [data_type],
+                        }
 
-                metadata.append({
-                    "metadata": {
-                        "inclusion": "automatic",
-                        "selected-by-default": True,
-                        "ga_type": 'dimension'
-                    },
-                    "breadcrumb": ["properties", dimension]
-                })
+                        table_key_properties.append(dimension)
 
-            # Add the metrics to the schema
-            for metric in report['metrics']:
-                data_type = self.client.lookup_data_type('metric', metric)
-                metric = metric.replace("ga:", "ga_")
+                        metadata.append({
+                            "metadata": {
+                                "inclusion": "automatic",
+                                "selected-by-default": True,
+                                "ga_type": 'dimension'
+                            },
+                            "breadcrumb": ["properties", dimension]
+                        })
 
-                schema['properties'][metric] = {
-                    # metrics are allowed to also have null values
-                    "type": ["null", data_type],
-                }
+                    # Add the metrics to the schema
+                    for metric in report['metrics']:
+                        data_type = self.client.lookup_data_type('metric', metric)
+                        metric = metric.replace("ga:", "ga_")
 
-                metadata.append({
-                    "metadata": {
-                        "inclusion": "automatic",
-                        "selected-by-default": True,
-                        "ga_type": 'metric'
-                    },
-                    "breadcrumb": ["properties", metric]
-                })
+                        schema['properties'][metric] = {
+                            # metrics are allowed to also have null values
+                            "type": ["null", data_type],
+                        }
 
-            # Also add the {start_date, end_date} params for the report query
-            schema['properties']['report_start_date'] = {
-                "type": ["string"],
-            }
+                        metadata.append({
+                            "metadata": {
+                                "inclusion": "automatic",
+                                "selected-by-default": True,
+                                "ga_type": 'metric'
+                            },
+                            "breadcrumb": ["properties", metric]
+                        })
 
-            schema['properties']['report_end_date'] = {
-                "type": ["string"],
-            }
+                    # Also add the {start_date, end_date} params for the report query
+                    schema['properties']['report_start_date'] = {
+                        "type": ["string"],
+                    }
 
-            # If 'ga:date' has not been added as a Dimension, add the
-            #  {start_date, end_date} params as keys
-            if not date_dimension_included:
-                table_key_properties.append('report_start_date')
-                table_key_properties.append('report_end_date')
+                    schema['properties']['report_end_date'] = {
+                        "type": ["string"],
+                    }
 
-            stream_metadata['metadata']['table-key-properties'] = \
-                table_key_properties
+                    # If 'ga:date' has not been added as a Dimension, add the
+                    #  {start_date, end_date} params as keys
+                    if not date_dimension_included:
+                        table_key_properties.append('report_start_date')
+                        table_key_properties.append('report_end_date')
 
-            # Add the Stream metadata (empty breadcrumb) to the start of the
-            # metada list so that everything is neatly organized in the Catalog
-            metadata.insert(0, stream_metadata)
+                    stream_metadata['metadata']['table-key-properties'] = \
+                        table_key_properties
 
-            # create and add catalog entry
-            catalog_entry = {
-                'stream': schema_name,
-                'tap_stream_id': schema_name,
-                'view_id': view_id,
-                'schema': schema,
-                'metadata': metadata
-            }
-            streams.append(catalog_entry)
+                    # Add the Stream metadata (empty breadcrumb) to the start of the
+                    # metada list so that everything is neatly organized in the Catalog
+                    metadata.insert(0, stream_metadata)
+
+                    # create and add catalog entry
+                    catalog_entry = {
+                        'stream': schema_name,
+                        'tap_stream_id': schema_name,
+                        'view_id': view_id,
+                        'schema': schema,
+                        'metadata': metadata
+                    }
+                    streams.append(catalog_entry)
 
         return {'streams': streams}
 
