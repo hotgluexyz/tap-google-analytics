@@ -204,7 +204,8 @@ def main():
     # Otherwise run in sync mode
     else:
         if args.catalog:
-            catalog = args.catalog.to_dict()
+            with open(args.catalog_path) as fp:
+                catalog = json.load(fp)
         else:
             catalog = discover(args.config)
 
